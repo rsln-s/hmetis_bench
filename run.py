@@ -8,8 +8,8 @@ from joblib import Parallel, delayed
 import multiprocessing
 import re
 import operator
-
-
+from itertools import product
+import math
 
 def get_first_word_after_substring(output, str_to_look_for):
 	outsplit = output.split(str_to_look_for, 1)
@@ -37,10 +37,8 @@ def get_first_num_after_substring(output, str_to_look_for):
 
 	return float((re.match(b'\d+.\d+', outclean[-1])).group(0))
 
-def run_for_file(num_parts):
-	filename = 'lp_ship12l'
-	cmd = "./hmetis2.0pre1 big_bench/lp_ship12l.mat.hmetis " + str(num_parts)
-
+def run_for_file(filename, num_parts, imbal):
+	cmd = "./hmetis2.0pre1 -ptype=kway -ufactor=" + str(imbal) + " big_bench/" + filename + " " + str(num_parts)
 	# Run zdrive
 	process = Popen(shlex.split(cmd), stdout=PIPE)
 	(output, err) = process.communicate()
@@ -51,14 +49,19 @@ def run_for_file(num_parts):
 	cutl = get_first_num_after_substring(output, b'Sum of External Degrees:')
 	if (cutn == None) or (cutl == None):
 		print("Something went wrong")
-	
-	result = [filename, num_parts, cutn, cutl]
 
-	tmp_out_filename = "output_for_inp_" + filename + ".csv"
+	graphname = (filename.split("."))[-3]	
+	result = [graphname, num_parts, imbal, cutn, cutl]
+
+	tmp_out_filename = "output_for_inp_" + graphname + ".csv"
 	with open(tmp_out_filename, 'w') as tmp_out:
 	    tmp_w = csv.writer(tmp_out)
 	    tmp_w.writerow(result)
 	return result 
+
+
+graph_files_all = os.listdir("big_bench/")
+graph_files = list(filter(lambda x: ".part." not in x, graph_files_all))
 
 outfilename = 'output_'
 if len(sys.argv) == 2:
@@ -66,13 +69,14 @@ if len(sys.argv) == 2:
 
 outfilename += '.csv'
 
-parts = [2,4,8,16,32,64,128]	
+parts = [2,4,8,16,32,64,128]
+imbal = [3,5,10]	
 num_cores = 8 
-results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(n) for n in parts)
+results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
 
 with open(outfilename, 'w') as csvfile:
 	out = csv.writer(csvfile)
-	out.writerow(['Graph name', 'Num parts','CUTN min', 'CUTL min'])
+	out.writerow(['Graph name', 'Num parts', 'Imbal','CUTN min', 'CUTL min'])
 	for r in results:
 		out.writerow(r)
 
