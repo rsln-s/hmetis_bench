@@ -38,7 +38,7 @@ def get_first_num_after_substring(output, str_to_look_for):
 	return float((re.match(b'\d+.\d+', outclean[-1])).group(0))
 
 def run_for_file(filename, num_parts, imbal):
-	cmd = "./hmetis2.0pre1 -ptype=kway -ufactor=" + str(imbal) + " big_bench/" + filename + " " + str(num_parts)
+	cmd = "./hmetis2.0pre1 -ptype=kway -ufactor=" + str(imbal) + " " + filename + " " + str(num_parts)
 	# Run zdrive
 	process = Popen(shlex.split(cmd), stdout=PIPE)
 	(output, err) = process.communicate()
@@ -50,7 +50,11 @@ def run_for_file(filename, num_parts, imbal):
 	if (cutn == None) or (cutl == None):
 		print("Something went wrong")
 
-	graphname = (filename.split("."))[-3]	
+	try:
+		graphname = (filename.split("."))[-3]
+	except IndexError:
+		print("Index error: ", filename, "cannot be split into ", filename.split("."))
+		graphname = filename
 	result = [graphname, num_parts, imbal, cutn, cutl]
 
 	tmp_out_filename = "output_for_inp_" + graphname + ".csv"
@@ -60,18 +64,17 @@ def run_for_file(filename, num_parts, imbal):
 	return result 
 
 
-graph_files_all = os.listdir("big_bench/")
+graph_files_all = os.listdir(".")
 graph_files = list(filter(lambda x: ".part." not in x, graph_files_all))
+graph_files = list(filter(lambda x: "core." not in x, graph_files))
+graph_files = list(filter(lambda x: "hmetis2.0pre1" not in x, graph_files))
+graph_files = list(filter(lambda x: "run.py" not in x, graph_files))
 
-outfilename = 'output_'
-if len(sys.argv) == 2:
-        outfilename += sys.argv[1]
-
-outfilename += '.csv'
+outfilename = 'output.csv'
 
 parts = [2,4,8,16,32,64,128]
 imbal = [3,5,10]	
-num_cores = 8 
+num_cores = 16 
 results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
 
 with open(outfilename, 'w') as csvfile:
