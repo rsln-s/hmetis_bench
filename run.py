@@ -46,8 +46,10 @@ def run_for_file(filename, num_parts, imbal):
 
 	#Process output
 	cutn = get_first_num_after_substring(output, b'Hyperedge Cut:')
-	cutl = get_first_num_after_substring(output, b'Sum of External Degrees:')
-	if (cutn == None) or (cutl == None):
+	nvtx = get_first_int_after_substring(output, b'vertices=')
+	nedge = get_first_int_after_substring(output, b'hedges=')
+	imbalance = get_first_num_after_substring(output, b'balance=')
+	if (num_parts == None) or (cutn == None) or (imbalance == None) or (cutn == 0): 
 		print("Something went wrong")
 
 	try:
@@ -55,7 +57,9 @@ def run_for_file(filename, num_parts, imbal):
 	except IndexError:
 		print("Index error: ", filename, "cannot be split into ", filename.split("."))
 		graphname = filename
-	result = [graphname, num_parts, imbal, cutn, cutl]
+	
+	unique_id = str(graphname) + str(num_parts) + str(imbalance)
+	result = [unique_id, graphname, nvtx, nedge, num_parts, imbalance, cutn]
 
 	tmp_out_filename = "output_for_inp_" + graphname + ".csv"
 	with open(tmp_out_filename, 'w') as tmp_out:
@@ -78,8 +82,7 @@ num_cores = 16
 results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
 
 with open(outfilename, 'w') as csvfile:
-	out = csv.writer(csvfile)
-	out.writerow(['Graph name', 'Num parts', 'Imbal','CUTN min', 'CUTL min'])
+	out = csv.writer(csvfile, delimiter=';')
 	for r in results:
 		out.writerow(r)
 
