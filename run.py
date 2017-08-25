@@ -74,10 +74,25 @@ graph_files = list(filter(lambda x: "core." not in x, graph_files))
 graph_files = list(filter(lambda x: "hmetis2.0pre1" not in x, graph_files))
 graph_files = list(filter(lambda x: "run.py" not in x, graph_files))
 
-outfilename = 'output.csv'
+outfilename = 'output_'
 
 parts = [2,4,8,16,32,64,128]
-imbal = [3,5,10]	
+
+outfilename = 'output_'
+if len(sys.argv) >= 2:
+        outfilename += sys.argv[1]
+
+outfilename += '.csv'
+
+if len(sys.argv) <= 2:
+	imbal = [3,5,10]
+else:
+	try:
+		imbal = [int(float(sys.argv[2]))]
+	except ValueError:
+		print("Incorrect imbalance encountered, exiting")
+		sys.exit(-1)
+
 num_cores = 16 
 results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
 

@@ -4,6 +4,6 @@
 
 module add python/3.4
 
-cd /home/rshaydu/hmetis_bench/$dir
+cd /home/rshaydu/bench_trilinos_zoltan/$dir/$subdir
 
-python3 run.py 
+python3 run.py $dir $imbal
