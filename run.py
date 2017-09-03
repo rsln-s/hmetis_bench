@@ -76,9 +76,6 @@ graph_files = list(filter(lambda x: "run.py" not in x, graph_files))
 
 outfilename = 'output_'
 
-parts = [2,4,8,16,32,64,128]
-
-outfilename = 'output_'
 if len(sys.argv) >= 2:
         outfilename += sys.argv[1]
 
@@ -93,8 +90,20 @@ else:
 		print("Incorrect imbalance encountered, exiting")
 		sys.exit(-1)
 
-num_cores = 16 
-results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
+if len(sys.argv) <= 3:
+	parts = [2,4,8,16,32,64,128]	
+else:
+	try:
+		parts = [int(float(sys.argv[3]))]
+	except ValueError:
+		print("Incorrect number of parts encountered, exiting")
+		sys.exit(-1)
+
+if len(parts) > 1 or len(imbal) > 1 or len(graph_files) > 1:
+	num_cores = 16 
+	results = Parallel(n_jobs=num_cores)(delayed(run_for_file)(f, n, imb) for f, n, imb in product(graph_files, parts, imbal))
+else:
+	results = [run_for_file(graph_files[0], parts[0], imbal[0])]
 
 with open(outfilename, 'w') as csvfile:
 	out = csv.writer(csvfile, delimiter=';')
