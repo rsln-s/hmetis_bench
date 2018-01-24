@@ -1,9 +1,11 @@
 #!/bin/bash
-#PBS -N hmetis_commun
-#PBS -l select=1:ncpus=16:mem=56gb,walltime=72:00:00
+#PBS -N hmet_test
+#PBS -l select=1:ncpus=8:mem=16gb,walltime=72:00:00
 
 module add python/3.4
 
-cd /home/rshaydu/bench_trilinos_zoltan/$dir/$subdir
+cd /scratch2/rshaydu/bench_trilinos_zoltan/$dir/$subdir
 
-python3 run.py $dir $imbal $part
+python3 run.py $dir $imbal
+
+cp output_"$dir".csv /home/rshaydu/bench_trilinos_zoltan/$dir/output_"$dir$subdir".csv
